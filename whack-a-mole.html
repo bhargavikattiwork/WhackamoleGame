@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7f2d7">
+  <title>Mole Patrol | Whack-a-Mole</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #18352d;
+      --muted: #53685b;
+      --paper: #f7f2d7;
+      --field: #bedc73;
+      --field-dark: #8dbb55;
+      --soil: #8c573c;
+      --soil-dark: #603e32;
+      --sun: #f8c84d;
+      --coral: #e85c45;
+      --white: #fffdf2;
+      --line: rgba(24, 53, 45, .18);
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      color: var(--ink);
+      background: var(--paper);
+    }
+
+    * { box-sizing: border-box; }
+    body { min-height: 100vh; margin: 0; padding: 28px 20px 40px; background-color: var(--paper); background-image: radial-gradient(rgba(24,53,45,.065) .7px, transparent .7px); background-size: 12px 12px; }
+    button { font: inherit; }
+    .shell { max-width: 1000px; margin: 0 auto; }
+    .topbar { display: flex; justify-content: space-between; align-items: center; gap: 20px; padding-bottom: 18px; border-bottom: 1px solid var(--line); }
+    .brand { display: flex; align-items: center; gap: 11px; }
+    .brand-mark { display: grid; place-items: center; width: 42px; aspect-ratio: 1; border: 2px solid var(--ink); border-radius: 50%; background: var(--sun); font-size: 22px; }
+    .brand-name { margin: 0; font-size: 17px; font-weight: 900; }
+    .brand-note { margin: 2px 0 0; color: var(--muted); font-size: 12px; }
+    .season-tag { padding: 7px 10px; border: 1px solid var(--line); border-radius: 3px; color: var(--muted); font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+    .intro { padding: 28px 0 22px; }
+    .eyebrow { margin: 0 0 8px; color: #527640; font-size: 11px; font-weight: 900; letter-spacing: .14em; text-transform: uppercase; }
+    h1 { margin: 0; font-family: Georgia, "Times New Roman", serif; font-size: clamp(36px, 7vw, 58px); line-height: .98; }
+    .intro-copy { max-width: 520px; margin: 10px 0 0; color: var(--muted); font-size: 15px; }
+    .layout { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(260px, .75fr); align-items: stretch; gap: 22px; }
+    .play-area { min-width: 0; padding: 18px; border: 2px solid var(--ink); border-radius: 6px; background: #e7efb6; box-shadow: 5px 5px 0 var(--ink); }
+    .board-top, .board-bottom { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .board-top { padding: 0 2px 15px; }
+    .board-label { margin: 0; font-size: 13px; font-weight: 900; }
+    .round-label { color: var(--muted); font-size: 11px; font-weight: 800; letter-spacing: .08em; }
+    .board { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(9px, 2vw, 17px); padding: clamp(13px, 3vw, 25px); border: 2px solid #41663a; border-radius: 5px; background-color: var(--field); background-image: linear-gradient(135deg, transparent 46%, rgba(255,255,255,.16) 47%, rgba(255,255,255,.16) 53%, transparent 54%); background-size: 28px 28px; }
+    .hole { position: relative; display: grid; place-items: center; min-width: 0; aspect-ratio: 1.25; padding: 0; overflow: hidden; border: 0; border-radius: 50%; background: transparent; color: var(--ink); cursor: pointer; -webkit-tap-highlight-color: transparent; }
+    .hole::before { position: absolute; right: 3%; bottom: 9%; left: 3%; height: 42%; border: 3px solid #71452f; border-radius: 50%; background: radial-gradient(ellipse at 50% 35%, #362820, #523528 70%); box-shadow: inset 0 5px 0 rgba(255,255,255,.08), 0 4px 0 rgba(48,74,37,.26); content: ""; }
+    .hole:hover::before { filter: brightness(1.12); }
+    .hole:focus-visible { outline: 3px solid var(--coral); outline-offset: 2px; }
+    .mole { position: absolute; z-index: 1; bottom: 22%; width: 67%; height: 74%; opacity: 0; transform: translateY(75%); transition: transform 150ms ease-out, opacity 100ms linear; pointer-events: none; }
+    .hole.active .mole { opacity: 1; transform: translateY(0); }
+    .hole-number { position: absolute; z-index: 2; right: 5px; bottom: 0; display: grid; width: 20px; aspect-ratio: 1; place-items: center; border: 1px solid rgba(24,53,45,.3); border-radius: 50%; background: rgba(255,253,242,.84); color: var(--ink); font-size: 10px; font-weight: 900; opacity: .82; }
+    .hole.active .hole-number { background: var(--sun); }
+    .board-bottom { padding: 13px 2px 0; color: var(--muted); font-size: 11px; }
+    .board-bottom strong { color: var(--ink); }
+    .side-panel { display: flex; flex-direction: column; gap: 14px; min-width: 0; padding: 18px; border: 2px solid var(--ink); border-radius: 6px; background: var(--white); box-shadow: 5px 5px 0 var(--ink); }
+    .stats { display: grid; grid-template-columns: 1fr 1fr; border-top: 1px solid var(--line); border-left: 1px solid var(--line); }
+    .stat { min-width: 0; padding: 12px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+    .stat-label { margin: 0 0 4px; color: var(--muted); font-size: 10px; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; }
+    .stat-value { margin: 0; font-family: Georgia, "Times New Roman", serif; font-size: 32px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1; }
+    .stat-time .stat-value { color: #c24833; }
+    .actions { display: grid; grid-template-columns: 1fr auto; gap: 9px; }
+    .action-button { min-height: 46px; padding: 10px 13px; border: 2px solid var(--ink); border-radius: 3px; background: var(--ink); color: var(--white); font-size: 13px; font-weight: 900; cursor: pointer; transition: transform 120ms ease, background-color 120ms ease; }
+    .action-button:hover { background: #285546; }
+    .action-button:active { transform: translateY(2px); }
+    .action-button:focus-visible, .sound-control input:focus-visible + .switch { outline: 3px solid var(--coral); outline-offset: 3px; }
+    .action-button.secondary { background: transparent; color: var(--ink); }
+    .action-button.secondary:hover { background: #edf1dc; }
+    .action-button:disabled { cursor: not-allowed; opacity: .45; }
+    .sound-control { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 42px; padding-top: 10px; border-top: 1px solid var(--line); color: var(--muted); font-size: 12px; font-weight: 800; cursor: pointer; }
+    .sound-control input { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; }
+    .switch { position: relative; width: 39px; height: 22px; flex: 0 0 auto; border-radius: 99px; background: #bbc5ae; transition: background-color 150ms ease; }
+    .switch::after { position: absolute; top: 3px; left: 3px; width: 16px; aspect-ratio: 1; border-radius: 50%; background: white; content: ""; transition: transform 150ms ease; }
+    .sound-control input:checked + .switch { background: #58864c; }
+    .sound-control input:checked + .switch::after { transform: translateX(17px); }
+    .status { min-height: 48px; margin: 0; padding: 12px; border-left: 4px solid var(--sun); background: #f5f0d9; color: var(--ink); font-size: 12px; font-weight: 700; line-height: 1.4; }
+    .key-note { margin: auto 0 0; padding-top: 8px; color: var(--muted); font-size: 11px; line-height: 1.5; }
+    .key-note kbd { padding: 2px 5px; border: 1px solid var(--line); border-radius: 3px; background: #f3f4e9; color: var(--ink); font: inherit; font-size: 10px; font-weight: 900; }
+    @media (max-width: 720px) { body { padding: 18px 14px 28px; } .layout { grid-template-columns: 1fr; gap: 17px; } .side-panel { display: grid; grid-template-columns: 1fr 1fr; align-items: start; gap: 12px; } .stats, .actions, .sound-control, .status, .key-note { grid-column: 1 / -1; } .play-area, .side-panel { box-shadow: 3px 3px 0 var(--ink); } }
+    @media (max-width: 380px) { body { padding-right: 10px; padding-left: 10px; } .play-area, .side-panel { padding: 13px; } .board { gap: 7px; padding: 10px; } .stat { padding: 9px; } .stat-value { font-size: 28px; } .season-tag { font-size: 9px; } }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; } }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <div class="brand"><span class="brand-mark" aria-hidden="true">✿</span><div><p class="brand-name">BACKYARD ARCADE</p><p class="brand-note">A little game for a sunny day</p></div></div>
+      <span class="season-tag">No. 01 / Field Games</span>
+    </header>
+    <section class="intro" aria-labelledby="page-title">
+      <p class="eyebrow">Quick round · 30 seconds</p>
+      <h1 id="page-title">Mole Patrol</h1>
+      <p class="intro-copy">Keep your eye on the garden. The quicker you are, the quicker they get.</p>
+    </section>
+    <div class="layout">
+      <section class="play-area" aria-label="Whack-a-Mole game board">
+        <div class="board-top"><p class="board-label">THE GARDEN</p><span class="round-label" id="round-label">READY WHEN YOU ARE</span></div>
+        <div class="board" id="board" aria-label="Nine mole holes">
+          <button class="hole" type="button" data-hole="0" aria-label="Empty hole 1. Press 1."><span class="hole-number" aria-hidden="true">1</span></button>
+          <button class="hole" type="button" data-hole="1" aria-label="Empty hole 2. Press 2."><span class="hole-number" aria-hidden="true">2</span></button>
+          <button class="hole" type="button" data-hole="2" aria-label="Empty hole 3. Press 3."><span class="hole-number" aria-hidden="true">3</span></button>
+          <button class="hole" type="button" data-hole="3" aria-label="Empty hole 4. Press 4."><span class="hole-number" aria-hidden="true">4</span></button>
+          <button class="hole" type="button" data-hole="4" aria-label="Empty hole 5. Press 5."><span class="hole-number" aria-hidden="true">5</span></button>
+          <button class="hole" type="button" data-hole="5" aria-label="Empty hole 6. Press 6."><span class="hole-number" aria-hidden="true">6</span></button>
+          <button class="hole" type="button" data-hole="6" aria-label="Empty hole 7. Press 7."><span class="hole-number" aria-hidden="true">7</span></button>
+          <button class="hole" type="button" data-hole="7" aria-label="Empty hole 8. Press 8."><span class="hole-number" aria-hidden="true">8</span></button>
+          <button class="hole" type="button" data-hole="8" aria-label="Empty hole 9. Press 9."><span class="hole-number" aria-hidden="true">9</span></button>
+        </div>
+        <div class="board-bottom"><span>One mole at a time.</span><strong id="pace-label">EASY DOES IT</strong></div>
+      </section>
+      <aside class="side-panel" aria-label="Game controls and score">
+        <div class="stats">
+          <div class="stat stat-time"><p class="stat-label">Time</p><p class="stat-value" id="time-value" aria-label="30 seconds">30</p></div>
+          <div class="stat"><p class="stat-label">Score</p><p class="stat-value" id="score-value" aria-live="polite">00</p></div>
+          <div class="stat"><p class="stat-label">Best</p><p class="stat-value" id="best-value">00</p></div>
+          <div class="stat"><p class="stat-label">Misses</p><p class="stat-value" id="misses-value">00</p></div>
+        </div>
+        <div class="actions"><button class="action-button" id="start-button" type="button">Start game</button><button class="action-button secondary" id="pause-button" type="button" disabled>Pause</button></div>
+        <label class="sound-control" for="sound-toggle"><span>Sound effects</span><input id="sound-toggle" type="checkbox" checked><span class="switch" aria-hidden="true"></span></label>
+        <p class="status" id="status" role="status" aria-live="polite">Ready? Start a round and catch that mole.</p>
+        <p class="key-note">Use your mouse or tap a hole. Keyboard players: press <kbd>1</kbd> to <kbd>9</kbd> to take a swing.</p>
+      </aside>
+    </div>
+  </main>
+  <script>
+    (() => {
+      const roundLengthMs = 30000;
+      const fastestMoleMs = 460;
+      const bestScoreKey = "mole-patrol-best";
+      const holes = Array.from(document.querySelectorAll(".hole"));
+      const startButton = document.getElementById("start-button");
+      const pauseButton = document.getElementById("pause-button");
+      const soundToggle = document.getElementById("sound-toggle");
+      const scoreValue = document.getElementById("score-value");
+      const missesValue = document.getElementById("misses-value");
+      const bestValue = document.getElementById("best-value");
+      const timeValue = document.getElementById("time-value");
+      const status = document.getElementById("status");
+      const roundLabel = document.getElementById("round-label");
+      const paceLabel = document.getElementById("pace-label");
+      const moleArtwork = `<svg class="mole" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><ellipse cx="50" cy="63" rx="37" ry="36" fill="#80604a"/><circle cx="23" cy="38" r="14" fill="#80604a"/><circle cx="77" cy="38" r="14" fill="#80604a"/><circle cx="23" cy="39" r="7" fill="#f3b4a0"/><circle cx="77" cy="39" r="7" fill="#f3b4a0"/><ellipse cx="50" cy="58" rx="34" ry="31" fill="#aa8060"/><ellipse cx="39" cy="53" rx="4" ry="5" fill="#192c28"/><ellipse cx="61" cy="53" rx="4" ry="5" fill="#192c28"/><ellipse cx="50" cy="68" rx="17" ry="12" fill="#e7c6a1"/><ellipse cx="50" cy="65" rx="5" ry="4" fill="#53372f"/><path d="M46 73 Q50 77 54 73" fill="none" stroke="#53372f" stroke-width="2" stroke-linecap="round"/><path d="M39 67 L29 65 M39 71 L29 72 M61 67 L71 65 M61 71 L71 72" stroke="#53372f" stroke-width="1.5" stroke-linecap="round"/><path d="M31 31 Q50 15 69 31" fill="none" stroke="#c9a27a" stroke-width="3" stroke-linecap="round"/></svg>`;
+
+      let gameState = "ready";
+      let score = 0;
+      let misses = 0;
+      let bestScore = loadBestScore();
+      let activeHole = -1;
+      let remainingMs = roundLengthMs;
+      let roundEndsAt = 0;
+      let moleDeadline = 0;
+      let moleRemainingMs = 0;
+      let roundTimer = null;
+      let moleTimer = null;
+      let audioContext = null;
+
+      bestValue.textContent = formatScore(bestScore);
+      renderBoard();
+
+      function formatScore(value) { return String(value).padStart(2, "0"); }
+      function loadBestScore() {
+        try { return Math.max(0, Number(window.localStorage.getItem(bestScoreKey)) || 0); }
+        catch { return 0; }
+      }
+      function saveBestScore(value) {
+        try { window.localStorage.setItem(bestScoreKey, String(value)); }
+        catch { /* Storage is optional; the current round remains playable. */ }
+      }
+      function renderBoard() {
+        holes.forEach((hole, holeIndex) => {
+          const isActive = (gameState === "playing" || gameState === "paused") && holeIndex === activeHole;
+          hole.classList.toggle("active", isActive);
+          hole.setAttribute("aria-pressed", String(isActive));
+          hole.setAttribute("aria-label", `${isActive ? "Mole! Whack" : "Empty"} hole ${holeIndex + 1}. Press ${holeIndex + 1}.`);
+          if (!hole.querySelector("svg")) hole.insertAdjacentHTML("afterbegin", moleArtwork);
+        });
+      }
+      function updateStats() {
+        scoreValue.textContent = formatScore(score);
+        missesValue.textContent = formatScore(misses);
+        bestValue.textContent = formatScore(bestScore);
+        timeValue.textContent = String(Math.ceil(remainingMs / 1000)).padStart(2, "0");
+        timeValue.setAttribute("aria-label", `${Math.ceil(remainingMs / 1000)} seconds remaining`);
+        paceLabel.textContent = score < 5 ? "EASY DOES IT" : score < 12 ? "QUICKER NOW" : "LIGHTNING MOLES";
+      }
+      function setRoundTimer() {
+        clearInterval(roundTimer);
+        roundEndsAt = Date.now() + remainingMs;
+        roundTimer = window.setInterval(() => {
+          remainingMs = Math.max(0, roundEndsAt - Date.now());
+          updateStats();
+          if (remainingMs <= 0) finishGame();
+        }, 100);
+      }
+      function moleDuration() { return Math.max(fastestMoleMs, 1250 - score * 42); }
+      function spawnMole(duration = moleDuration()) {
+        if (gameState !== "playing") return;
+        clearTimeout(moleTimer);
+        activeHole = Math.floor(Math.random() * holes.length);
+        renderBoard();
+        scheduleMoleEscape(duration);
+      }
+      function scheduleMoleEscape(duration) {
+        clearTimeout(moleTimer);
+        moleRemainingMs = duration;
+        moleDeadline = Date.now() + duration;
+        moleTimer = window.setTimeout(() => {
+          if (gameState !== "playing") return;
+          activeHole = -1;
+          misses += 1;
+          updateStats();
+          status.textContent = "A mole got away! Stay sharp.";
+          spawnMole();
+        }, duration);
+      }
+      function startGame() {
+        clearInterval(roundTimer);
+        clearTimeout(moleTimer);
+        gameState = "playing";
+        score = 0;
+        misses = 0;
+        remainingMs = roundLengthMs;
+        activeHole = -1;
+        startButton.textContent = "Start over";
+        pauseButton.disabled = false;
+        pauseButton.textContent = "Pause";
+        roundLabel.textContent = "ROUND IN PROGRESS";
+        status.textContent = "Here they come. Make every swing count!";
+        updateStats();
+        setRoundTimer();
+        spawnMole();
+      }
+      function pauseGame() {
+        if (gameState === "playing") {
+          remainingMs = Math.max(0, roundEndsAt - Date.now());
+          moleRemainingMs = activeHole >= 0 ? Math.max(0, moleDeadline - Date.now()) : 0;
+          clearInterval(roundTimer);
+          clearTimeout(moleTimer);
+          gameState = "paused";
+          pauseButton.textContent = "Resume";
+          roundLabel.textContent = "ROUND PAUSED";
+          status.textContent = "Paused. Your mole is holding its place.";
+          updateStats();
+          renderBoard();
+          return;
+        }
+        if (gameState === "paused") {
+          gameState = "playing";
+          pauseButton.textContent = "Pause";
+          roundLabel.textContent = "ROUND IN PROGRESS";
+          status.textContent = "Back in the garden!";
+          setRoundTimer();
+          if (activeHole >= 0) scheduleMoleEscape(Math.max(1, moleRemainingMs));
+          else spawnMole();
+          renderBoard();
+        }
+      }
+      function finishGame() {
+        clearInterval(roundTimer);
+        clearTimeout(moleTimer);
+        gameState = "finished";
+        remainingMs = 0;
+        activeHole = -1;
+        pauseButton.disabled = true;
+        startButton.textContent = "Play again";
+        roundLabel.textContent = "TIME IS UP";
+        status.textContent = score > bestScore ? `New garden record: ${score}!` : `Round over! You scored ${score}.`;
+        if (score > bestScore) { bestScore = score; saveBestScore(bestScore); }
+        updateStats();
+        renderBoard();
+      }
+      function playTone(frequency, duration, type = "sine") {
+        if (!soundToggle.checked) return;
+        try {
+          const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+          if (!AudioContextClass) return;
+          audioContext ??= new AudioContextClass();
+          if (audioContext.state === "suspended") audioContext.resume();
+          const oscillator = audioContext.createOscillator();
+          const gain = audioContext.createGain();
+          oscillator.type = type;
+          oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+          gain.gain.setValueAtTime(0.12, audioContext.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + duration);
+          oscillator.connect(gain);
+          gain.connect(audioContext.destination);
+          oscillator.start();
+          oscillator.stop(audioContext.currentTime + duration);
+        } catch { /* Audio is optional. */ }
+      }
+      function chooseHole(holeIndex) {
+        if (gameState !== "playing") return;
+        if (holeIndex === activeHole) {
+          clearTimeout(moleTimer);
+          activeHole = -1;
+          score += 1;
+          updateStats();
+          status.textContent = `Nice hit! Score: ${score}.`;
+          playTone(580 + Math.min(score, 15) * 24, 0.11, "triangle");
+          spawnMole();
+          return;
+        }
+        misses += 1;
+        updateStats();
+        status.textContent = "Miss! Watch for the next one.";
+        playTone(170, 0.08, "sine");
+      }
+      holes.forEach((hole) => hole.addEventListener("click", () => chooseHole(Number(hole.dataset.hole))));
+      startButton.addEventListener("click", startGame);
+      pauseButton.addEventListener("click", pauseGame);
+      document.addEventListener("keydown", (event) => {
+        if (event.altKey || event.ctrlKey || event.metaKey || event.repeat) return;
+        if (/^[1-9]$/.test(event.key)) { event.preventDefault(); chooseHole(Number(event.key) - 1); }
+      });
+    })();
+  </script>
+</body>
+</html>
